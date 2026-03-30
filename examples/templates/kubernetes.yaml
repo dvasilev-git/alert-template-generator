@@ -1,0 +1,65 @@
+groups:
+  - name: kubernetes.rules
+    rules:
+      - name: CPU Close to Limits
+        annotations:
+          summary: "Pod CPU usage approaching resource limits"
+          runbook: /docs/runbooks/cpu-limits.md
+        labels:
+          team: infrastructure
+        severities:
+          - level: critical
+            expr: |
+              (sum by (namespace,pod,container,cluster)(
+                rate(container_cpu_usage_seconds_total{container!=""}[5m])
+              ) / sum by(namespace,pod,container,cluster)(
+                kube_pod_container_resource_limits{resource="cpu"}
+              )) * 100 > 95
+            for: 5m
+          - level: warning
+            expr: |
+              (sum by (namespace,pod,container,cluster)(
+                rate(container_cpu_usage_seconds_total{container!=""}[5m])
+              ) / sum by(namespace,pod,container,cluster)(
+                kube_pod_container_resource_limits{resource="cpu"}
+              )) * 100 > 90
+            for: 5m
+
+      - name: Memory Close to Limits
+        annotations:
+          summary: "Pod memory usage approaching resource limits"
+          runbook: /docs/runbooks/memory-limits.md
+        labels:
+          team: infrastructure
+        severities:
+          - level: critical
+            expr: |
+              (sum by (namespace,pod,container,cluster)(
+                container_memory_working_set_bytes{container!=""}
+              ) / sum by(namespace,pod,container,cluster)(
+                kube_pod_container_resource_limits{resource="memory"}
+              )) * 100 > 95
+            for: 5m
+          - level: warning
+            expr: |
+              (sum by (namespace,pod,container,cluster)(
+                container_memory_working_set_bytes{container!=""}
+              ) / sum by(namespace,pod,container,cluster)(
+                kube_pod_container_resource_limits{resource="memory"}
+              )) * 100 > 90
+            for: 5m
+
+      - name: Pod Restart Loop
+        annotations:
+          summary: "Pod restarting frequently"
+        labels:
+          team: infrastructure
+        severities:
+          - level: critical
+            expr: |
+              increase(kube_pod_container_status_restarts_total[1h]) > 10
+            for: 5m
+          - level: warning
+            expr: |
+              increase(kube_pod_container_status_restarts_total[1h]) > 5
+            for: 10m

@@ -1,0 +1,50 @@
+groups:
+- name: database.rules
+  rules:
+  - alert: Database Connection Pool Exhaustion
+    expr: (pg_stat_activity_count / pg_settings_max_connections) * 100 > 90
+    labels:
+      team: backend
+      severity: critical
+      severity_order: '1'
+    annotations:
+      summary: Database connection pool running low
+      runbook: /docs/runbooks/db-connections.md
+    for: 5m
+  - alert: Database Connection Pool Exhaustion
+    expr: (pg_stat_activity_count / pg_settings_max_connections) * 100 > 75
+    labels:
+      team: backend
+      severity: warning
+      severity_order: '2'
+    annotations:
+      summary: Database connection pool running low
+      runbook: /docs/runbooks/db-connections.md
+    for: 10m
+  - alert: Database Replication Lag
+    expr: pg_replication_lag_seconds > 30
+    labels:
+      team: backend
+      severity: critical
+      severity_order: '1'
+    annotations:
+      summary: Database replication falling behind
+    for: 5m
+  - alert: Database Replication Lag
+    expr: pg_replication_lag_seconds > 10
+    labels:
+      team: backend
+      severity: warning
+      severity_order: '2'
+    annotations:
+      summary: Database replication falling behind
+    for: 5m
+  - alert: Database Replication Lag
+    expr: pg_replication_lag_seconds > 5
+    labels:
+      team: backend
+      severity: low
+      severity_order: '3'
+    annotations:
+      summary: Database replication falling behind
+    for: 10m
